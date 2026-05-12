@@ -197,7 +197,7 @@ async function startHttp(): Promise<void> {
   app.use(express.json());
 
   app.get('/health', (_req, res) => {
-    res.json({ status: 'ok', name: 'claudetest' });
+    res.json({ status: 'ok', name: 'claudetest', github_token_set: !!process.env['GITHUB_TOKEN'] });
   });
 
   app.post('/mcp', async (req, res) => {

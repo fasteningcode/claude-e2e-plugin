@@ -172,7 +172,7 @@ async function startHttp() {
     const app = express();
     app.use(express.json());
     app.get('/health', (_req, res) => {
-        res.json({ status: 'ok', name: 'claudetest' });
+        res.json({ status: 'ok', name: 'claudetest', github_token_set: !!process.env['GITHUB_TOKEN'] });
     });
     app.post('/mcp', async (req, res) => {
         // eslint-disable-next-line @typescript-eslint/no-explicit-any

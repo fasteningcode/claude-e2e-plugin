@@ -4,7 +4,7 @@ services:
   claudetest:
     build:
       context: ..
-      dockerfile: docker/Dockerfile
+      dockerfile: Dockerfile
     ports:
       - "7860:7860"
     environment:

@@ -30,6 +30,9 @@
     "node": ">=20.0.0",
     "pnpm": ">=9.0.0"
   },
+  "pnpm": {
+    "onlyBuiltDependencies": ["esbuild", "edgedriver", "geckodriver"]
+  },
   "lint-staged": {
     "*.{ts,tsx}": ["eslint --fix", "prettier --write"],
     "*.{json,md}": ["prettier --write"]

@@ -37,7 +37,7 @@
   ],
   "deployment": {
     "cloud": {
-      "url": "https://claude-e2e-plugin.fly.dev/mcp"
+      "url": "https://fasteningcode-claude-e2e-plugin.hf.space/mcp"
     },
     "self_hosted": {
       "docker": "ghcr.io/fasteningcode/claude-e2e-plugin:latest",

@@ -6,11 +6,11 @@ services:
       context: ..
       dockerfile: docker/Dockerfile
     ports:
-      - "3000:3000"
+      - "7860:7860"
     environment:
       - GITHUB_TOKEN=${GITHUB_TOKEN}
       - NODE_ENV=production
-      - PORT=3000
+      - PORT=7860
     restart: unless-stopped
     healthcheck:
       test: ["CMD", "node", "-e", "process.exit(0)"]

@@ -12,6 +12,7 @@ vi.mock('@octokit/rest', () => {
     git: {
       getTree: vi.fn(),
       getRef: vi.fn(),
+      getCommit: vi.fn(),
       createRef: vi.fn(),
     },
     pulls: {
@@ -63,8 +64,14 @@ describe('GitHubClient', () => {
   });
 
   describe('getFileTree', () => {
-    it('returns only blob entries', async () => {
+    it('resolves branch → commit → tree SHA before calling getTree', async () => {
       const mock = getMockOctokit();
+      vi.mocked(mock.git.getRef).mockResolvedValueOnce({
+        data: { object: { sha: 'commit-sha-abc' } },
+      } as never);
+      vi.mocked(mock.git.getCommit).mockResolvedValueOnce({
+        data: { tree: { sha: 'tree-sha-xyz' } },
+      } as never);
       vi.mocked(mock.git.getTree).mockResolvedValueOnce({
         data: {
           tree: [
@@ -77,6 +84,9 @@ describe('GitHubClient', () => {
 
       const result = await client.getFileTree('https://github.com/acme/my-app', 'main');
 
+      expect(mock.git.getRef).toHaveBeenCalledWith({ owner: 'acme', repo: 'my-app', ref: 'heads/main' });
+      expect(mock.git.getCommit).toHaveBeenCalledWith({ owner: 'acme', repo: 'my-app', commit_sha: 'commit-sha-abc' });
+      expect(mock.git.getTree).toHaveBeenCalledWith(expect.objectContaining({ tree_sha: 'tree-sha-xyz' }));
       expect(result).toHaveLength(2);
       expect(result.every((e) => e.type === 'blob')).toBe(true);
     });

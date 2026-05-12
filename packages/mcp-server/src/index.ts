@@ -57,7 +57,7 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
       {
         name: 'generate_tests',
         description:
-          'Generate Playwright (web) or Appium (mobile) test files for specified source files. Opens a PR with the generated tests.',
+          'Generate Playwright (web) or Appium (mobile) test files for specified source files. Returns file contents — use create_pr to commit them.',
         inputSchema: {
           type: 'object',
           properties: {
@@ -145,38 +145,53 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
   };
 });
 
+function toErrorContent(err: unknown): { content: Array<{ type: string; text: string }>; isError: boolean } {
+  const message = err instanceof Error ? err.message : String(err);
+  return { content: [{ type: 'text', text: `Error: ${message}` }], isError: true };
+}
+
 server.setRequestHandler(CallToolRequestSchema, async (request) => {
-  const token = getGitHubToken();
+  let token: string;
+  try {
+    token = getGitHubToken();
+  } catch (err) {
+    return toErrorContent(err);
+  }
+
   const client = new GitHubClient(token);
 
-  switch (request.params.name) {
-    case 'analyze_repo': {
-      const input = AnalyzeRepoInputSchema.parse(request.params.arguments);
-      const result = await handleAnalyzeRepo(input, client);
-      return { content: [{ type: 'text', text: JSON.stringify(result, null, 2) }] };
+  try {
+    switch (request.params.name) {
+      case 'analyze_repo': {
+        const input = AnalyzeRepoInputSchema.parse(request.params.arguments);
+        const result = await handleAnalyzeRepo(input, client);
+        return { content: [{ type: 'text', text: JSON.stringify(result, null, 2) }] };
+      }
+      case 'generate_tests': {
+        const input = GenerateTestsInputSchema.parse(request.params.arguments);
+        const result = await handleGenerateTests(input, client);
+        return { content: [{ type: 'text', text: JSON.stringify(result, null, 2) }] };
+      }
+      case 'run_tests': {
+        const input = RunTestsInputSchema.parse(request.params.arguments);
+        const result = await handleRunTests(input, client);
+        return { content: [{ type: 'text', text: JSON.stringify(result, null, 2) }] };
+      }
+      case 'diagnose_failure': {
+        const input = DiagnoseFailureInputSchema.parse(request.params.arguments);
+        const result = await handleDiagnoseFailure(input, client);
+        return { content: [{ type: 'text', text: JSON.stringify(result, null, 2) }] };
+      }
+      case 'create_pr': {
+        const input = CreatePrInputSchema.parse(request.params.arguments);
+        const result = await handleCreatePr(input, client);
+        return { content: [{ type: 'text', text: JSON.stringify(result, null, 2) }] };
+      }
+      default:
+        return toErrorContent(new Error(`Unknown tool: ${request.params.name}`));
     }
-    case 'generate_tests': {
-      const input = GenerateTestsInputSchema.parse(request.params.arguments);
-      const result = await handleGenerateTests(input, client);
-      return { content: [{ type: 'text', text: JSON.stringify(result, null, 2) }] };
-    }
-    case 'run_tests': {
-      const input = RunTestsInputSchema.parse(request.params.arguments);
-      const result = await handleRunTests(input, client);
-      return { content: [{ type: 'text', text: JSON.stringify(result, null, 2) }] };
-    }
-    case 'diagnose_failure': {
-      const input = DiagnoseFailureInputSchema.parse(request.params.arguments);
-      const result = await handleDiagnoseFailure(input, client);
-      return { content: [{ type: 'text', text: JSON.stringify(result, null, 2) }] };
-    }
-    case 'create_pr': {
-      const input = CreatePrInputSchema.parse(request.params.arguments);
-      const result = await handleCreatePr(input, client);
-      return { content: [{ type: 'text', text: JSON.stringify(result, null, 2) }] };
-    }
-    default:
-      throw new Error(`Unknown tool: ${request.params.name}`);
+  } catch (err) {
+    return toErrorContent(err);
   }
 });
 

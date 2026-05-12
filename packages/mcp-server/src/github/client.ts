@@ -38,10 +38,26 @@ export class GitHubClient {
 
   async getFileTree(repoUrl: string, branch: string): Promise<FileTreeEntry[]> {
     const { owner, repo } = parseRepoUrl(repoUrl);
+
+    // Resolve branch → commit SHA → tree SHA (passing a branch name directly to getTree is unreliable)
+    const { data: refData } = await this.octokit.git.getRef({
+      owner,
+      repo,
+      ref: `heads/${branch}`,
+    });
+    const commitSha = refData.object.sha;
+
+    const { data: commitData } = await this.octokit.git.getCommit({
+      owner,
+      repo,
+      commit_sha: commitSha,
+    });
+    const treeSha = commitData.tree.sha;
+
     const { data } = await this.octokit.git.getTree({
       owner,
       repo,
-      tree_sha: branch,
+      tree_sha: treeSha,
       recursive: '1',
     });
     return (data.tree as FileTreeEntry[]).filter((e) => e.type === 'blob');
@@ -90,8 +106,9 @@ export class GitHubClient {
       if (!Array.isArray(data) && data.type === 'file') {
         existingSha = data.sha;
       }
-    } catch {
-      // File doesn't exist yet — create it
+    } catch (err: unknown) {
+      const status = (err as { status?: number }).status;
+      if (status !== 404) throw err; // only swallow "file doesn't exist yet"
     }
 
     await this.octokit.repos.createOrUpdateFileContents({

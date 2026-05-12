@@ -2,6 +2,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 
 import { handleAnalyzeRepo } from '../tools/analyze-repo.js';
 import { handleGenerateTests } from '../tools/generate-tests.js';
+import { handleRunTests } from '../tools/run-tests.js';
 import { handleDiagnoseFailure } from '../tools/diagnose-failure.js';
 import { handleCreatePr } from '../tools/create-pr.js';
 import type { GitHubClient } from '../github/client.js';
@@ -167,6 +168,77 @@ describe('handleDiagnoseFailure', () => {
 
     expect(report.root_cause).toContain('timeout');
   });
+});
+
+describe('handleRunTests', () => {
+  it('returns success when run completes with success conclusion', async () => {
+    const futureDate = new Date(Date.now() + 5000).toISOString();
+    const client = makeMockClient({
+      triggerWorkflow: vi.fn().mockResolvedValue(undefined),
+      getLatestWorkflowRun: vi.fn().mockResolvedValue({
+        id: 789,
+        status: 'completed',
+        conclusion: 'success',
+        html_url: 'https://github.com/acme/app/actions/runs/789',
+        created_at: futureDate,
+        updated_at: futureDate,
+      }),
+    });
+
+    const result = await handleRunTests(
+      { repo_url: 'https://github.com/acme/app', workflow_id: 'test.yml', branch: 'main', timeout_ms: 30000 },
+      client,
+    );
+
+    expect(result.status).toBe('success');
+    expect(result.run_id).toBe(789);
+  });
+
+  it('returns failure when conclusion is failure', async () => {
+    const futureDate = new Date(Date.now() + 5000).toISOString();
+    const client = makeMockClient({
+      triggerWorkflow: vi.fn().mockResolvedValue(undefined),
+      getLatestWorkflowRun: vi.fn().mockResolvedValue({
+        id: 790,
+        status: 'completed',
+        conclusion: 'failure',
+        html_url: 'https://github.com/acme/app/actions/runs/790',
+        created_at: futureDate,
+        updated_at: futureDate,
+      }),
+    });
+
+    const result = await handleRunTests(
+      { repo_url: 'https://github.com/acme/app', workflow_id: 'test.yml', branch: 'main', timeout_ms: 30000 },
+      client,
+    );
+
+    expect(result.status).toBe('failure');
+  });
+
+  it('ignores runs created before dispatch (correlation check)', async () => {
+    const oldDate = new Date(Date.now() - 60000).toISOString();
+    const getLatestWorkflowRun = vi.fn().mockResolvedValue({
+      id: 100,
+      status: 'completed',
+      conclusion: 'success',
+      html_url: 'https://github.com/acme/app/actions/runs/100',
+      created_at: oldDate,
+      updated_at: oldDate,
+    });
+
+    const client = makeMockClient({
+      triggerWorkflow: vi.fn().mockResolvedValue(undefined),
+      getLatestWorkflowRun,
+    });
+
+    const result = await handleRunTests(
+      { repo_url: 'https://github.com/acme/app', workflow_id: 'test.yml', branch: 'main', timeout_ms: 100 },
+      client,
+    );
+
+    expect(result.status).toBe('timed_out');
+  }, 10000);
 });
 
 describe('handleCreatePr', () => {

@@ -2,7 +2,14 @@ import type { GitHubClient } from '../github/client.js';
 import type { RunTestsInput, WorkflowRunResult } from '../types.js';
 
 const POLL_INTERVAL_MS = 10_000;
-const TERMINAL_STATUSES = new Set(['completed', 'cancelled', 'timed_out']);
+function conclusionToStatus(conclusion: string | null): WorkflowRunResult['status'] {
+  switch (conclusion) {
+    case 'success': return 'success';
+    case 'cancelled': return 'cancelled';
+    case 'timed_out': return 'timed_out';
+    default: return 'failure';
+  }
+}
 
 export async function handleRunTests(
   input: RunTestsInput,
@@ -10,6 +17,7 @@ export async function handleRunTests(
 ): Promise<WorkflowRunResult> {
   const branch = input.branch ?? 'main';
   const timeoutMs = input.timeout_ms ?? 300_000;
+  const dispatchedAt = new Date().toISOString();
 
   await client.triggerWorkflow(input.repo_url, input.workflow_id, branch);
 
@@ -21,18 +29,20 @@ export async function handleRunTests(
   while (Date.now() - startTime < timeoutMs) {
     const run = await client.getLatestWorkflowRun(input.repo_url, input.workflow_id, branch);
 
-    if (run && TERMINAL_STATUSES.has(run.status ?? '')) {
-      const conclusion = run.conclusion ?? 'unknown';
+    // Only consider runs that were created after we dispatched, to avoid picking up a prior run
+    if (run && run.created_at >= dispatchedAt && run.status === 'completed') {
       return {
         run_id: run.id,
-        status: conclusion === 'success' ? 'success' : 'failure',
-        conclusion,
+        status: conclusionToStatus(run.conclusion),
+        conclusion: run.conclusion,
         html_url: run.html_url,
         duration_ms: Date.now() - startTime,
       };
     }
 
-    await sleep(POLL_INTERVAL_MS);
+    const remaining = timeoutMs - (Date.now() - startTime);
+    if (remaining <= 0) break;
+    await sleep(Math.min(POLL_INTERVAL_MS, remaining));
   }
 
   const finalRun = await client.getLatestWorkflowRun(input.repo_url, input.workflow_id, branch);

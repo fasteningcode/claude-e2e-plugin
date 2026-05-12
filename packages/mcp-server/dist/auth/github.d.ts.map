@@ -1,0 +1,1 @@
+{"version":3,"file":"github.d.ts","sourceRoot":"","sources":["../../src/auth/github.ts"],"names":[],"mappings":"AAAA,MAAM,WAAW,gBAAgB;IAC/B,KAAK,EAAE,MAAM,CAAC;CACf;AAED,wBAAgB,cAAc,IAAI,MAAM,CASvC;AAED,wBAAgB,YAAY,CAAC,OAAO,EAAE,MAAM,GAAG;IAAE,KAAK,EAAE,MAAM,CAAC;IAAC,IAAI,EAAE,MAAM,CAAA;CAAE,CAc7E"}

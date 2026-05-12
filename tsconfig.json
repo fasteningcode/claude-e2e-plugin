@@ -1,0 +1,9 @@
+{
+  "extends": "./tsconfig.base.json",
+  "include": ["packages/*/src/**/*", "fixtures/*/src/**/*"],
+  "references": [
+    { "path": "./packages/mcp-server" },
+    { "path": "./packages/playwright-agent" },
+    { "path": "./packages/appium-agent" }
+  ]
+}

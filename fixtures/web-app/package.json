@@ -1,0 +1,23 @@
+{
+  "name": "@claudetest/fixture-web-app",
+  "version": "0.0.1",
+  "private": true,
+  "description": "Next.js fixture app for ClaudeTest E2E testing — deliberately missing test coverage",
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "test:e2e": "playwright test"
+  },
+  "dependencies": {
+    "next": "^14.1.0",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.42.1",
+    "@types/node": "^20.11.0",
+    "@types/react": "^18.2.0",
+    "typescript": "^5.4.2"
+  }
+}

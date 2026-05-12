@@ -1,0 +1,29 @@
+{
+  "name": "@claudetest/playwright-agent",
+  "version": "0.0.1",
+  "description": "Playwright test generation and analysis agent for ClaudeTest",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "import": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    }
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "dev": "tsc -p tsconfig.json --watch"
+  },
+  "dependencies": {
+    "@anthropic-ai/sdk": "^0.24.0",
+    "@playwright/test": "^1.42.1",
+    "zod": "^3.22.4"
+  },
+  "devDependencies": {
+    "@types/node": "^20.11.0"
+  },
+  "files": ["dist"],
+  "keywords": ["claude", "playwright", "testing", "test-generation"]
+}

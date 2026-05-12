@@ -1,0 +1,16 @@
+version: '3.9'
+
+services:
+  claudetest:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile
+    environment:
+      - GITHUB_TOKEN=${GITHUB_TOKEN}
+      - NODE_ENV=production
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "node", "-e", "process.exit(0)"]
+      interval: 30s
+      timeout: 10s
+      retries: 3

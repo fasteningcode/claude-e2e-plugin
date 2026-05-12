@@ -1,6 +1,8 @@
 #!/usr/bin/env node
+import express from 'express';
 import { Server } from '@modelcontextprotocol/sdk/server/index.js';
 import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
+import { StreamableHTTPServerTransport } from '@modelcontextprotocol/sdk/server/streamableHttp.js';
 import {
   CallToolRequestSchema,
   ListToolsRequestSchema,
@@ -21,20 +23,18 @@ import { handleDiagnoseFailure } from './tools/diagnose-failure.js';
 import { handleGenerateTests } from './tools/generate-tests.js';
 import { handleRunTests } from './tools/run-tests.js';
 
-const server = new Server(
-  {
-    name: 'claudetest',
-    version: '0.0.1',
-  },
-  {
-    capabilities: {
-      tools: {},
-    },
-  },
-);
+function toErrorContent(err: unknown): { content: Array<{ type: string; text: string }>; isError: boolean } {
+  const message = err instanceof Error ? err.message : String(err);
+  return { content: [{ type: 'text', text: `Error: ${message}` }], isError: true };
+}
 
-server.setRequestHandler(ListToolsRequestSchema, async () => {
-  return {
+function createServer(): Server {
+  const server = new Server(
+    { name: 'claudetest', version: '0.0.1' },
+    { capabilities: { tools: {} } },
+  );
+
+  server.setRequestHandler(ListToolsRequestSchema, async () => ({
     tools: [
       {
         name: 'analyze_repo',
@@ -142,65 +142,106 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
         },
       },
     ],
-  };
-});
+  }));
 
-function toErrorContent(err: unknown): { content: Array<{ type: string; text: string }>; isError: boolean } {
-  const message = err instanceof Error ? err.message : String(err);
-  return { content: [{ type: 'text', text: `Error: ${message}` }], isError: true };
+  server.setRequestHandler(CallToolRequestSchema, async (request) => {
+    let token: string;
+    try {
+      token = getGitHubToken();
+    } catch (err) {
+      return toErrorContent(err);
+    }
+
+    const client = new GitHubClient(token);
+
+    try {
+      switch (request.params.name) {
+        case 'analyze_repo': {
+          const input = AnalyzeRepoInputSchema.parse(request.params.arguments);
+          const result = await handleAnalyzeRepo(input, client);
+          return { content: [{ type: 'text', text: JSON.stringify(result, null, 2) }] };
+        }
+        case 'generate_tests': {
+          const input = GenerateTestsInputSchema.parse(request.params.arguments);
+          const result = await handleGenerateTests(input, client);
+          return { content: [{ type: 'text', text: JSON.stringify(result, null, 2) }] };
+        }
+        case 'run_tests': {
+          const input = RunTestsInputSchema.parse(request.params.arguments);
+          const result = await handleRunTests(input, client);
+          return { content: [{ type: 'text', text: JSON.stringify(result, null, 2) }] };
+        }
+        case 'diagnose_failure': {
+          const input = DiagnoseFailureInputSchema.parse(request.params.arguments);
+          const result = await handleDiagnoseFailure(input, client);
+          return { content: [{ type: 'text', text: JSON.stringify(result, null, 2) }] };
+        }
+        case 'create_pr': {
+          const input = CreatePrInputSchema.parse(request.params.arguments);
+          const result = await handleCreatePr(input, client);
+          return { content: [{ type: 'text', text: JSON.stringify(result, null, 2) }] };
+        }
+        default:
+          return toErrorContent(new Error(`Unknown tool: ${request.params.name}`));
+      }
+    } catch (err) {
+      return toErrorContent(err);
+    }
+  });
+
+  return server;
 }
 
-server.setRequestHandler(CallToolRequestSchema, async (request) => {
-  let token: string;
-  try {
-    token = getGitHubToken();
-  } catch (err) {
-    return toErrorContent(err);
-  }
+async function startHttp(): Promise<void> {
+  const app = express();
+  app.use(express.json());
 
-  const client = new GitHubClient(token);
+  app.get('/health', (_req, res) => {
+    res.json({ status: 'ok', name: 'claudetest' });
+  });
 
-  try {
-    switch (request.params.name) {
-      case 'analyze_repo': {
-        const input = AnalyzeRepoInputSchema.parse(request.params.arguments);
-        const result = await handleAnalyzeRepo(input, client);
-        return { content: [{ type: 'text', text: JSON.stringify(result, null, 2) }] };
-      }
-      case 'generate_tests': {
-        const input = GenerateTestsInputSchema.parse(request.params.arguments);
-        const result = await handleGenerateTests(input, client);
-        return { content: [{ type: 'text', text: JSON.stringify(result, null, 2) }] };
-      }
-      case 'run_tests': {
-        const input = RunTestsInputSchema.parse(request.params.arguments);
-        const result = await handleRunTests(input, client);
-        return { content: [{ type: 'text', text: JSON.stringify(result, null, 2) }] };
-      }
-      case 'diagnose_failure': {
-        const input = DiagnoseFailureInputSchema.parse(request.params.arguments);
-        const result = await handleDiagnoseFailure(input, client);
-        return { content: [{ type: 'text', text: JSON.stringify(result, null, 2) }] };
-      }
-      case 'create_pr': {
-        const input = CreatePrInputSchema.parse(request.params.arguments);
-        const result = await handleCreatePr(input, client);
-        return { content: [{ type: 'text', text: JSON.stringify(result, null, 2) }] };
-      }
-      default:
-        return toErrorContent(new Error(`Unknown tool: ${request.params.name}`));
-    }
-  } catch (err) {
-    return toErrorContent(err);
-  }
-});
+  app.post('/mcp', async (req, res) => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const transport = new StreamableHTTPServerTransport({} as any);
+    const server = createServer();
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    await server.connect(transport as any);
+    await transport.handleRequest(req, res, req.body);
+    res.on('finish', () => server.close());
+  });
 
-async function main(): Promise<void> {
+  app.get('/mcp', async (req, res) => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const transport = new StreamableHTTPServerTransport({} as any);
+    const server = createServer();
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    await server.connect(transport as any);
+    await transport.handleRequest(req, res);
+  });
+
+  const port = parseInt(process.env['PORT'] ?? '3000', 10);
+  app.listen(port, '0.0.0.0', () => {
+    console.log(`ClaudeTest MCP server listening on port ${port}`);
+  });
+}
+
+async function startStdio(): Promise<void> {
   const transport = new StdioServerTransport();
+  const server = createServer();
   await server.connect(transport);
 }
 
-main().catch((err: unknown) => {
-  console.error('ClaudeTest MCP server error:', err);
-  process.exit(1);
-});
+const useStdio =
+  process.argv.includes('--stdio') || process.env['MCP_TRANSPORT'] === 'stdio';
+
+if (useStdio) {
+  startStdio().catch((err: unknown) => {
+    console.error('ClaudeTest MCP server error:', err);
+    process.exit(1);
+  });
+} else {
+  startHttp().catch((err: unknown) => {
+    console.error('ClaudeTest MCP server error:', err);
+    process.exit(1);
+  });
+}

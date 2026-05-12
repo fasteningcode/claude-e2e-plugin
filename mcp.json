@@ -4,8 +4,8 @@
   "display_name": "ClaudeTest",
   "description": "Enterprise-grade Playwright (web) and Appium (mobile) test automation for Claude. Generates missing tests, diagnoses CI failures, and opens fix PRs — all from a single conversation.",
   "version": "0.0.1",
-  "homepage": "https://github.com/your-org/claude-enterprise-testing",
-  "icon": "https://raw.githubusercontent.com/your-org/claude-enterprise-testing/main/docs/logo.png",
+  "homepage": "https://github.com/fasteningcode/claude-e2e-plugin",
+  "icon": "https://raw.githubusercontent.com/fasteningcode/claude-e2e-plugin/main/docs/logo.png",
   "categories": ["developer-tools", "testing", "ci-cd"],
   "auth": {
     "type": "oauth2",
@@ -37,11 +37,11 @@
   ],
   "deployment": {
     "cloud": {
-      "url": "https://claudetest.example.com/mcp"
+      "url": "https://claude-e2e-plugin.fly.dev/mcp"
     },
     "self_hosted": {
-      "docker": "ghcr.io/your-org/claudetest:latest",
-      "docs": "https://github.com/your-org/claude-enterprise-testing/blob/main/docs/self-hosted.md"
+      "docker": "ghcr.io/fasteningcode/claude-e2e-plugin:latest",
+      "docs": "https://github.com/fasteningcode/claude-e2e-plugin/blob/main/docs/self-hosted.md"
     }
   }
 }

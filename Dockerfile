@@ -8,13 +8,17 @@ COPY package.json pnpm-workspace.yaml pnpm-lock.yaml ./
 COPY packages/mcp-server/package.json ./packages/mcp-server/
 COPY packages/playwright-agent/package.json ./packages/playwright-agent/
 COPY packages/appium-agent/package.json ./packages/appium-agent/
+COPY fixtures/web-app/package.json ./fixtures/web-app/
+COPY fixtures/mobile-app/package.json ./fixtures/mobile-app/
 
 RUN pnpm install --frozen-lockfile --ignore-scripts
 
 COPY tsconfig.base.json ./
 COPY packages/ ./packages/
 
-RUN pnpm -r run build
+RUN pnpm --filter "@claudetest/playwright-agent" run build && \
+    pnpm --filter "@claudetest/appium-agent" run build && \
+    pnpm --filter "@claudetest/mcp-server" run build
 
 
 FROM node:22-alpine AS runtime
@@ -27,6 +31,8 @@ COPY --from=builder /app/package.json /app/pnpm-workspace.yaml ./
 COPY --from=builder /app/packages/mcp-server/package.json ./packages/mcp-server/
 COPY --from=builder /app/packages/playwright-agent/package.json ./packages/playwright-agent/
 COPY --from=builder /app/packages/appium-agent/package.json ./packages/appium-agent/
+COPY --from=builder /app/fixtures/web-app/package.json ./fixtures/web-app/
+COPY --from=builder /app/fixtures/mobile-app/package.json ./fixtures/mobile-app/
 
 RUN pnpm install --frozen-lockfile --prod --ignore-scripts
 

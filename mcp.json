@@ -19,23 +19,33 @@
   "tools": [
     {
       "name": "analyze_repo",
-      "description": "Scan a GitHub repository to identify untested flows and coverage gaps"
+      "title": "Analyze Repository Coverage",
+      "description": "Scan a GitHub repository to identify untested flows and coverage gaps",
+      "annotations": { "readOnlyHint": true, "destructiveHint": false, "idempotentHint": true, "openWorldHint": true }
     },
     {
       "name": "generate_tests",
-      "description": "Generate Playwright or Appium test files for specified source files"
+      "title": "Generate Test Files",
+      "description": "Generate Playwright or Appium test files for specified source files",
+      "annotations": { "readOnlyHint": true, "destructiveHint": false, "idempotentHint": true, "openWorldHint": true }
     },
     {
       "name": "run_tests",
-      "description": "Trigger a GitHub Actions workflow and wait for results"
+      "title": "Run CI Workflow",
+      "description": "Trigger a GitHub Actions workflow and wait for results",
+      "annotations": { "readOnlyHint": false, "destructiveHint": false, "idempotentHint": false, "openWorldHint": true }
     },
     {
       "name": "diagnose_failure",
-      "description": "Analyze a failed CI run and explain the root cause in plain English"
+      "title": "Diagnose CI Failure",
+      "description": "Analyze a failed CI run and explain the root cause in plain English",
+      "annotations": { "readOnlyHint": true, "destructiveHint": false, "idempotentHint": true, "openWorldHint": true }
     },
     {
       "name": "create_pr",
-      "description": "Create a GitHub pull request with generated test files"
+      "title": "Create Pull Request",
+      "description": "Create a GitHub pull request with generated test files",
+      "annotations": { "readOnlyHint": false, "destructiveHint": false, "idempotentHint": false, "openWorldHint": true }
     }
   ],
   "deployment": {

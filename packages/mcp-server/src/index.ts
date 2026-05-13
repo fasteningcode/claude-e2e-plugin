@@ -46,8 +46,15 @@ function createServer(token: string): Server {
     tools: [
       {
         name: 'analyze_repo',
+        title: 'Analyze Repository Coverage',
         description:
           'Scan a GitHub repository to identify untested flows and coverage gaps. Returns a structured report of what needs tests.',
+        annotations: {
+          readOnlyHint: true,
+          destructiveHint: false,
+          idempotentHint: true,
+          openWorldHint: true,
+        },
         inputSchema: {
           type: 'object',
           properties: {
@@ -64,8 +71,15 @@ function createServer(token: string): Server {
       },
       {
         name: 'generate_tests',
+        title: 'Generate Test Files',
         description:
           'Generate Playwright (web) or Appium (mobile) test files for specified source files. Returns file contents — use create_pr to commit them.',
+        annotations: {
+          readOnlyHint: true,
+          destructiveHint: false,
+          idempotentHint: true,
+          openWorldHint: true,
+        },
         inputSchema: {
           type: 'object',
           properties: {
@@ -87,8 +101,15 @@ function createServer(token: string): Server {
       },
       {
         name: 'run_tests',
+        title: 'Run CI Workflow',
         description:
           'Trigger a GitHub Actions workflow run and wait for results. Returns the run status and summary.',
+        annotations: {
+          readOnlyHint: false,
+          destructiveHint: false,
+          idempotentHint: false,
+          openWorldHint: true,
+        },
         inputSchema: {
           type: 'object',
           properties: {
@@ -108,8 +129,15 @@ function createServer(token: string): Server {
       },
       {
         name: 'diagnose_failure',
+        title: 'Diagnose CI Failure',
         description:
           'Analyze a failed GitHub Actions run. Returns a plain-English diagnosis: root cause, affected files, and a suggested fix.',
+        annotations: {
+          readOnlyHint: true,
+          destructiveHint: false,
+          idempotentHint: true,
+          openWorldHint: true,
+        },
         inputSchema: {
           type: 'object',
           properties: {
@@ -121,8 +149,15 @@ function createServer(token: string): Server {
       },
       {
         name: 'create_pr',
+        title: 'Create Pull Request',
         description:
           'Create a GitHub pull request with specified files on a new branch. Used to deliver generated tests back to the repository.',
+        annotations: {
+          readOnlyHint: false,
+          destructiveHint: false,
+          idempotentHint: false,
+          openWorldHint: true,
+        },
         inputSchema: {
           type: 'object',
           properties: {

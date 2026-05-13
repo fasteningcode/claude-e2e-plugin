@@ -24,6 +24,7 @@ function extractToken(req) {
 }
 function createServer(token) {
     const server = new Server({ name: 'claudetest', version: '0.0.1' }, { capabilities: { tools: {} } });
+    // eslint-disable-next-line @typescript-eslint/require-await
     server.setRequestHandler(ListToolsRequestSchema, async () => ({
         tools: [
             {
@@ -167,6 +168,7 @@ function createServer(token) {
     });
     return server;
 }
+// eslint-disable-next-line @typescript-eslint/require-await
 async function startHttp() {
     const app = express();
     app.use(express.json());
@@ -181,30 +183,35 @@ async function startHttp() {
             });
             return;
         }
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        /* eslint-disable @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-explicit-any */
         const transport = new StreamableHTTPServerTransport({});
         const server = createServer(token);
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         await server.connect(transport);
+        /* eslint-enable @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-explicit-any */
         await transport.handleRequest(req, res, req.body);
+        // eslint-disable-next-line @typescript-eslint/no-misused-promises
         res.on('finish', () => server.close());
     }
+    // eslint-disable-next-line @typescript-eslint/no-misused-promises
     app.post('/mcp', handleMcp);
+    // eslint-disable-next-line @typescript-eslint/no-misused-promises
     app.get('/mcp', handleMcp);
     const port = parseInt(process.env['PORT'] ?? '3000', 10);
     app.listen(port, '0.0.0.0', () => {
         console.log(`ClaudeTest MCP server listening on port ${port}`);
     });
 }
-async function startStdio() {
+function startStdio() {
     const token = getGitHubToken();
     const transport = new StdioServerTransport();
     const server = createServer(token);
-    await server.connect(transport);
+    void server.connect(transport);
 }
 const useStdio = process.argv.includes('--stdio') || process.env['MCP_TRANSPORT'] === 'stdio';
 if (useStdio) {
-    startStdio().catch((err) => {
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-call
+    startStdio();
+    process.on('uncaughtException', (err) => {
         console.error('ClaudeTest MCP server error:', err);
         process.exit(1);
     });

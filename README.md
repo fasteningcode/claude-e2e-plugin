@@ -14,6 +14,7 @@ app_port: 7860
 [![MCP Registry](https://img.shields.io/badge/MCP%20Registry-io.github.fasteningcode%2Fclaudetest-blue)](https://registry.modelcontextprotocol.io)
 [![license](https://img.shields.io/npm/l/@fasteningcode/claudetest)](./LICENSE)
 [![pnpm](https://img.shields.io/badge/maintained%20with-pnpm-cc00ff)](https://pnpm.io)
+[![codecov](https://codecov.io/gh/fasteningcode/claude-e2e-plugin/branch/main/graph/badge.svg)](https://codecov.io/gh/fasteningcode/claude-e2e-plugin)
 
 Enterprise-grade Playwright (web) and Appium (mobile) test automation plugin for Claude.
 

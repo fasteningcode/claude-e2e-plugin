@@ -5,7 +5,7 @@
   "description": "Enterprise-grade Playwright (web) and Appium (mobile) test automation for Claude. Generates missing tests, diagnoses CI failures, and opens fix PRs — all from a single conversation.",
   "version": "0.0.3",
   "homepage": "https://github.com/fasteningcode/claude-e2e-plugin",
-  "icon": "https://raw.githubusercontent.com/fasteningcode/claude-e2e-plugin/main/docs/logo.png",
+  "icon": "https://raw.githubusercontent.com/fasteningcode/claude-e2e-plugin/main/docs/logo.svg",
   "categories": ["developer-tools", "testing", "ci-cd"],
   "auth": {
     "type": "oauth2",

@@ -7,7 +7,13 @@ export default defineConfig({
     coverage: {
       provider: 'v8',
       reporter: ['text', 'json', 'html'],
-      exclude: ['**/node_modules/**', '**/dist/**', '**/fixtures/**', '**/*.config.*'],
+      exclude: [
+        '**/node_modules/**',
+        '**/dist/**',
+        '**/fixtures/**',
+        '**/*.config.*',
+        '**/src/index.ts',  // entry-point barrel files — no testable logic
+      ],
       thresholds: {
         lines: 80,
         functions: 80,

@@ -1,5 +1,5 @@
 {
-  "name": "@claudetest/appium-agent",
+  "name": "@fasteningcode/claudetest-appium",
   "version": "0.0.1",
   "description": "Appium test generation and analysis agent for ClaudeTest",
   "type": "module",

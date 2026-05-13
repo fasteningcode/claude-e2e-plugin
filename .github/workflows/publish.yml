@@ -34,7 +34,19 @@ jobs:
       - name: Run tests
         run: pnpm test
 
-      - name: Publish packages
-        run: pnpm -r publish --access public --no-git-checks
+      - name: Publish to npm
+        run: pnpm --filter @fasteningcode/claudetest publish --access public --no-git-checks
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+      - name: Download mcp-publisher
+        run: |
+          curl -L https://github.com/modelcontextprotocol/registry/releases/download/v1.7.9/mcp-publisher_linux_amd64.tar.gz \
+            -o /tmp/mcp-publisher.tar.gz
+          tar -xzf /tmp/mcp-publisher.tar.gz -C /tmp
+          chmod +x /tmp/mcp-publisher
+
+      - name: Publish to MCP Registry
+        run: /tmp/mcp-publisher publish
+        env:
+          MCP_REGISTRY_TOKEN: ${{ secrets.MCP_REGISTRY_TOKEN }}

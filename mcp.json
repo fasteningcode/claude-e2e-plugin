@@ -3,14 +3,17 @@
   "name": "claudetest",
   "display_name": "ClaudeTest",
   "description": "Enterprise-grade Playwright (web) and Appium (mobile) test automation for Claude. Generates missing tests, diagnoses CI failures, and opens fix PRs — all from a single conversation.",
-  "version": "0.0.1",
+  "version": "0.0.3",
   "homepage": "https://github.com/fasteningcode/claude-e2e-plugin",
   "icon": "https://raw.githubusercontent.com/fasteningcode/claude-e2e-plugin/main/docs/logo.png",
   "categories": ["developer-tools", "testing", "ci-cd"],
   "auth": {
     "type": "oauth2",
     "provider": "github",
+    "client_id": "Ov23liZryOcxSZAbHQFL",
     "scopes": ["repo", "workflow"],
+    "authorization_url": "https://github.com/login/oauth/authorize",
+    "token_url": "https://github.com/login/oauth/access_token",
     "instructions": "Connect your GitHub account to allow ClaudeTest to read your repositories, trigger workflows, and open pull requests."
   },
   "tools": [

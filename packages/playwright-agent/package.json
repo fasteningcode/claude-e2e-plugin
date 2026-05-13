@@ -1,5 +1,5 @@
 {
-  "name": "@claudetest/playwright-agent",
+  "name": "@fasteningcode/claudetest-playwright",
   "version": "0.0.1",
   "description": "Playwright test generation and analysis agent for ClaudeTest",
   "type": "module",

@@ -122,10 +122,10 @@ importers:
 
   packages/mcp-server:
     dependencies:
-      '@claudetest/appium-agent':
+      '@fasteningcode/claudetest-appium':
         specifier: workspace:*
         version: link:../appium-agent
-      '@claudetest/playwright-agent':
+      '@fasteningcode/claudetest-playwright':
         specifier: workspace:*
         version: link:../playwright-agent
       '@modelcontextprotocol/sdk':

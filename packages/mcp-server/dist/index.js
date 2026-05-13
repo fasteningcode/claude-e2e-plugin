@@ -16,7 +16,13 @@ function toErrorContent(err) {
     const message = err instanceof Error ? err.message : String(err);
     return { content: [{ type: 'text', text: `Error: ${message}` }], isError: true };
 }
-function createServer() {
+function extractToken(req) {
+    const auth = req.headers['authorization'];
+    if (auth?.startsWith('Bearer '))
+        return auth.slice(7);
+    return process.env['GITHUB_TOKEN'] ?? null;
+}
+function createServer(token) {
     const server = new Server({ name: 'claudetest', version: '0.0.1' }, { capabilities: { tools: {} } });
     server.setRequestHandler(ListToolsRequestSchema, async () => ({
         tools: [
@@ -123,13 +129,6 @@ function createServer() {
         ],
     }));
     server.setRequestHandler(CallToolRequestSchema, async (request) => {
-        let token;
-        try {
-            token = getGitHubToken();
-        }
-        catch (err) {
-            return toErrorContent(err);
-        }
         const client = new GitHubClient(token);
         try {
             switch (request.params.name) {
@@ -172,33 +171,35 @@ async function startHttp() {
     const app = express();
     app.use(express.json());
     app.get('/health', (_req, res) => {
-        res.json({ status: 'ok', name: 'claudetest', github_token_set: !!process.env['GITHUB_TOKEN'] });
+        res.json({ status: 'ok', name: 'claudetest', auth: 'per-request Bearer token or GITHUB_TOKEN env' });
     });
-    app.post('/mcp', async (req, res) => {
+    async function handleMcp(req, res) {
+        const token = extractToken(req);
+        if (!token) {
+            res.status(401).json({
+                error: 'GitHub token required. Pass Authorization: Bearer <token> or set GITHUB_TOKEN.',
+            });
+            return;
+        }
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const transport = new StreamableHTTPServerTransport({});
-        const server = createServer();
+        const server = createServer(token);
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         await server.connect(transport);
         await transport.handleRequest(req, res, req.body);
         res.on('finish', () => server.close());
-    });
-    app.get('/mcp', async (req, res) => {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const transport = new StreamableHTTPServerTransport({});
-        const server = createServer();
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        await server.connect(transport);
-        await transport.handleRequest(req, res);
-    });
+    }
+    app.post('/mcp', handleMcp);
+    app.get('/mcp', handleMcp);
     const port = parseInt(process.env['PORT'] ?? '3000', 10);
     app.listen(port, '0.0.0.0', () => {
         console.log(`ClaudeTest MCP server listening on port ${port}`);
     });
 }
 async function startStdio() {
+    const token = getGitHubToken();
     const transport = new StdioServerTransport();
-    const server = createServer();
+    const server = createServer(token);
     await server.connect(transport);
 }
 const useStdio = process.argv.includes('--stdio') || process.env['MCP_TRANSPORT'] === 'stdio';

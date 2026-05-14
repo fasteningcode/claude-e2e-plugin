@@ -32,7 +32,7 @@ import { Octokit } from '@octokit/rest';
 
 function getMockOctokit(): ReturnType<typeof Octokit> {
   return (Octokit as unknown as ReturnType<typeof vi.fn>).mock.results[0]
-    ?.value as ReturnType<typeof Octokit>;
+    ?.value;
 }
 
 describe('GitHubClient', () => {
